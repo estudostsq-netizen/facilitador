@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Facilitador Teste V.1.4 - Corporativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#eef2f7;color:#333;font-family:'Roboto',sans-serif;}
+.sidebar{width:250px;height:100vh;background:#0b3d91;color:white;position:fixed;padding-top:40px;box-shadow:2px 0 12px rgba(0,0,0,0.25);}
+.sidebar h2{text-align:center;margin-bottom:50px;font-size:24px;font-family:'Montserrat',sans-serif;}
+.sidebar button{background:none;border:none;width:100%;text-align:left;padding:18px 25px;color:white;font-size:17px;cursor:pointer;transition:0.3s;font-family:'Roboto',sans-serif;}
+.sidebar button:hover{background:#092c6c;}
+.content{margin-left:250px;padding:35px;display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:30px;}
+.card{background:white;border-radius:15px;padding:25px;box-shadow:0 8px 22px rgba(0,0,0,0.12);transition:0.3s;}
+.card:hover{box-shadow:0 12px 28px rgba(0,0,0,0.18);}
+.card h2{color:#0b3d91;margin-bottom:20px;font-family:'Montserrat',sans-serif;font-size:22px;}
+input, select, textarea{width:100%;padding:12px;margin:12px 0;border-radius:8px;border:1px solid #ccc;font-size:15px;font-family:'Roboto',sans-serif;}
+textarea{resize:none;}
+button.calc{background:#0b3d91;color:white;padding:14px;border:none;width:100%;border-radius:8px;font-weight:bold;font-size:16px;cursor:pointer;transition:0.3s;font-family:'Roboto',sans-serif;}
+button.calc:hover{background:#092c6c;}
+
+/* Notas */
+.nota-card{flex:1 1 280px;border-radius:15px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.18);cursor:grab;display:flex;flex-direction:column;transition:0.3s;position:relative;background:white;}
+.nota-card.dragging{opacity:0.5;}
+.nota-card:hover{box-shadow:0 10px 26px rgba(0,0,0,0.25);}
+.nota-card img{max-width:100%;border-radius:10px;margin-top:12px;}
+.nota-card strong{font-size:17px;margin-bottom:8px;color:#0b3d91;}
+.nota-menu{position:absolute;top:10px;right:12px;cursor:pointer;font-size:20px;user-select:none;}
+.nota-menu-content{display:none;position:absolute;top:28px;right:12px;background:white;border:1px solid #ccc;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10;}
+.nota-menu-content div{padding:8px 12px;cursor:pointer;font-size:14px;transition:0.2s;}
+.nota-menu-content div:hover{background:#f0f0f0;}
+
+/* Arquivos */
+.arquivo-card{flex:1 1 200px;border-radius:15px;padding:15px;box-shadow:0 6px 20px rgba(0,0,0,0.18);display:flex;flex-direction:column;align-items:center;position:relative;background:white;cursor:grab;transition:0.3s;}
+.arquivo-card.dragging{opacity:0.5;}
+.arquivo-card:hover{box-shadow:0 10px 26px rgba(0,0,0,0.25);}
+.arquivo-card img{max-width:100%;border-radius:10px;margin-bottom:10px;}
+.arquivo-card .nome-arquivo{text-align:center;word-break:break-word;}
+.arquivo-menu{position:absolute;top:8px;right:10px;cursor:pointer;font-size:18px;user-select:none;}
+.arquivo-menu-content{display:none;position:absolute;top:26px;right:10px;background:white;border:1px solid #ccc;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10;}
+.arquivo-menu-content div{padding:8px 12px;cursor:pointer;font-size:14px;transition:0.2s;}
+.arquivo-menu-content div:hover{background:#f0f0f0;}
+
+/* Tabela Dias */
+table{width:100%;border-collapse:collapse;margin-top:18px;}
+table, th, td{border:1px solid #ccc;}
+th, td{padding:10px;text-align:left;font-size:15px;}
+.vermelho{background:#f8d7da;}
+.amarelo{background:#fff3cd;}
+.verde{background:#d4edda;}
+
+@media(max-width:768px){
+    .content{grid-template-columns:1fr;}
+    .sidebar{width:100%;height:auto;position:relative;}
+    body{margin-top:10px;}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+<h2>Facilitador V.1.4</h2>
+<button onclick="mostrarModulo('datasCard')">Controle de Booking</button>
+<button onclick="mostrarModulo('aliquotasCard')">Simulador Tributário</button>
+<button onclick="mostrarModulo('cnpjCard')">Consulta CNPJ</button>
+<button onclick="mostrarModulo('notasCard')">Notas</button>
+<button onclick="mostrarModulo('arquivosCard')">Arquivos / Prints</button>
+<button onclick="mostrarModulo('youtubeCard')">Tutoriais YouTube</button>
+</div>
+
+<div class="content">
+
+<!-- Módulo 1: Controle de Dias -->
+<div id="datasCard" class="card modulo">
+<h2>Controle de Booking</h2>
+<input type="file" id="upload" accept=".xlsx,.xls">
+<select id="colunaData"></select>
+<select id="colunaTitulo"></select>
+<button class="calc" onclick="processarPlanilha()">Processar</button>
+<div id="resultadoTabela"></div>
+</div>
+
+<!-- Módulo 2: Simulador Tributário -->
+<div id="aliquotasCard" class="card modulo" style="display:none;">
+<h2>Simulador Tributário</h2>
+<input type="text" id="valorBase" placeholder="R$ 0,00" oninput="formatarMoeda(this)">
+<select id="regime">
+<option value="real">Lucro Real</option>
+<option value="presumido">Lucro Presumido</option>
+</select>
+<button class="calc" onclick="calcularAliquotas()">Calcular</button>
+<div id="resultadoAliquotas"></div>
+</div>
+
+<!-- Módulo 3: Consulta CNPJ -->
+<div id="cnpjCard" class="card modulo" style="display:none;">
+<h2>Consulta CNPJ</h2>
+<input type="text" id="cnpjInput" placeholder="Digite o CNPJ (somente números)">
+<button class="calc" onclick="consultarCNPJ(document.getElementById('cnpjInput').value)">Buscar</button>
+<div id="resultadoCnpj"></div>
+</div>
+
+<!-- Módulo 4: Notas -->
+<div id="notasCard" class="card modulo" style="display:none;">
+<h2>Notas</h2>
+<input type="text" id="notaTitulo" placeholder="Título da nota">
+<textarea id="notaDescricao" rows="2" placeholder="Descrição"></textarea>
+<input type="file" id="notaImagem" accept="image/*">
+<button class="calc" onclick="adicionarNota()">Adicionar Nota</button>
+<input type="text" id="buscaNotas" placeholder="Buscar notas..." oninput="carregarNotas()">
+<div id="notasContainer" style="margin-top:18px; display:flex; flex-wrap:wrap; gap:18px;"></div>
+</div>
+
+<!-- Módulo 5: Arquivos / Prints -->
+<div id="arquivosCard" class="card modulo" style="display:none;">
+<h2>Arquivos / Prints</h2>
+<input type="file" id="inputArquivos" multiple>
+<input type="text" id="buscaArquivos" placeholder="Buscar arquivos..." oninput="carregarArquivos()">
+<div id="arquivosContainer" style="margin-top:18px; display:flex; flex-wrap:wrap; gap:18px;"></div>
+</div>
+
+<!-- Módulo 6: Ramo me ajuda (RSS feed) -->
+<div id="youtubeCard" class="card modulo" style="display:none;">
+<h2>Tutoriais YouTube</h2>
+<input type="text" id="buscaYoutube" placeholder="Buscar no canal..." oninput="buscarVideosRSS()">
+<div id="youtubeContainer" style="margin-top:18px; display:flex; flex-wrap:wrap; gap:18px;"></div>
+</div>
+
+</div>
+
+<script>
+/* === Sidebar === */
+function mostrarModulo(id){
+    document.querySelectorAll(".modulo").forEach(m=>m.style.display="none");
+    document.getElementById(id).style.display="block";
+}
+
+/* === Módulo 1: Controle de Dias === */
+let dadosPlanilha=[];
+document.getElementById('upload').addEventListener('change',function(e){
+    const reader=new FileReader();
+    reader.onload=function(e){
+        const data=new Uint8Array(e.target.result);
+        const workbook=XLSX.read(data,{type:'array'});
+        const sheet=workbook.Sheets[workbook.SheetNames[0]];
+        dadosPlanilha=XLSX.utils.sheet_to_json(sheet);
+        const colunas=Object.keys(dadosPlanilha[0]);
+        preencherSelect('colunaData',colunas);
+        preencherSelect('colunaTitulo',colunas);
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
+});
+function preencherSelect(id,colunas){const select=document.getElementById(id);select.innerHTML="";colunas.forEach(c=>{const option=document.createElement("option");option.value=c;option.text=c;select.appendChild(option);});}
+function converterData(valor){if(typeof valor==="number"){return new Date((valor-25569)*86400*1000);}return new Date(valor.split("/").reverse().join("-"));}
+function processarPlanilha(){
+    const colData=document.getElementById("colunaData").value;
+    const colTitulo=document.getElementById("colunaTitulo").value;
+    const hoje=new Date();
+    let resultado=dadosPlanilha.map(linha=>{
+        const data=converterData(linha[colData]);
+        const diff=Math.floor((hoje-data)/(1000*60*60*24));
+        return {titulo:linha[colTitulo],dias:diff};
+    });
+    resultado.sort((a,b)=>b.dias-a.dias);
+    let tabela="<table><tr><th>Título</th><th>Dias</th></tr>";
+    resultado.forEach(item=>{
+        let classe=item.dias>30?"vermelho":item.dias>14?"amarelo":"verde";
+        tabela+=`<tr class="${classe}"><td>${item.titulo}</td><td>${item.dias}</td></tr>`;
+    });
+    tabela+="</table>";
+    document.getElementById("resultadoTabela").innerHTML=tabela;
+}
+
+/* === Módulo 2: Simulador Tributário === */
+function formatarMoeda(campo){
+    let valor=campo.value.replace(/\D/g,'');
+    valor=(valor/100).toFixed(2)+'';
+    valor=valor.replace(".",",");
+    valor=valor.replace(/\B(?=(\d{3})+(?!\d))/g,".");
+    campo.value="R$ "+valor;
+}
+function moedaParaNumero(valor){return parseFloat(valor.replace("R$","").replace(/\./g,'').replace(",",'.'));}
+function numeroParaMoeda(valor){return valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function calcularAliquotas(){
+    const valor=moedaParaNumero(document.getElementById("valorBase").value);
+    const regime=document.getElementById("regime").value;
+    if(isNaN(valor)){alert("Digite um valor válido");return;}
+    let PIS=regime==="real"?1.65:0.65;
+    let COFINS=regime==="real"?7.6:3;
+    const vPIS=valor*PIS/100;
+    const vCOFINS=valor*COFINS/100;
+    const total=vPIS+vCOFINS;
+    const liquido=valor-total;
+    document.getElementById("resultadoAliquotas").innerHTML=`
+<h3>${regime==="real"?"Lucro Real":"Lucro Presumido"}</h3>
+<p>Valor Base: <strong>${numeroParaMoeda(valor)}</strong></p>
+<p>PIS: <strong>${numeroParaMoeda(vPIS)}</strong></p>
+<p>COFINS: <strong>${numeroParaMoeda(vCOFINS)}</strong></p>
+<hr>
+<p>Total Tributos: <strong>${numeroParaMoeda(total)}</strong></p>
+<p>Valor Líquido: <strong>${numeroParaMoeda(liquido)}</strong></p>`;
+}
+
+/* === Módulo 3: Consulta CNPJ === */
+function separarLogradouro(logradouro){
+    if(!logradouro) return {tipo:"",nome:""};
+    logradouro = logradouro.trim();
+    const tipos = ["Rua","R.","Avenida","Av.","Av","Travessa","Trav.","Praça","Pça.","Alameda","Rodovia","Estrada","Largo","Viela","Rod.","Estr.","Lgo."];
+    for(let tipo of tipos){
+        const regex = new RegExp("^" + tipo.replace(".","\\.") + "\\s+", "i");
+        if(regex.test(logradouro)){
+            return {tipo: tipo, nome: logradouro.replace(regex,"").trim()};
+        }
+    }
+    return {tipo:"",nome:logradouro};
+}
+function consultarCNPJ(cnpj){
+    cnpj=cnpj.replace(/\D/g,'');
+    if(cnpj.length!==14){alert("CNPJ inválido"); return;}
+    fetch(`https://kitana.opencnpj.com/cnpj/${cnpj}`)
+    .then(res=>res.json())
+    .then(resp=>{
+        const data = resp.data || resp; 
+        const log = separarLogradouro(data.logradouro);
+        document.getElementById("resultadoCnpj").innerHTML = `
+        <p><strong>CNPJ:</strong> ${data.cnpj}</p>
+        <p><strong>Razão Social:</strong> ${data.razaoSocial || data.razao_social}</p>
+        <p><strong>Nome Fantasia:</strong> ${data.nomeFantasia || data.nome_fantasia}</p>
+        <h4>Endereço:</h4>
+        <p><strong>Tipo de Logradouro:</strong> ${log.tipo}</p>
+        <p><strong>Nome do Logradouro:</strong> ${log.nome}</p>
+        <p><strong>Número:</strong> ${data.numero}</p>
+        <p><strong>Complemento:</strong> ${data.complemento}</p>
+        <p><strong>Bairro:</strong> ${data.bairro}</p>
+        <p><strong>Cidade:</strong> ${data.municipio}</p>
+        <p><strong>Estado:</strong> ${data.uf}</p>
+        <p><strong>CEP:</strong> ${data.cep}</p>
+        `;
+    })
+    .catch(()=>alert("Erro ao consultar CNPJ"));
+}
+
+/* === Módulo 4: Notas === */
+/* Funções de adicionar, editar, excluir notas com drag & drop e imagens */
+
+/* === Módulo 5: Arquivos / Prints === */
+/* Funções de upload, drag & drop, renomear, baixar, excluir */
+
+/* === Módulo 6: Tutoriais YouTube via RSS feed === */
+async function buscarVideosRSS(){
+  const filtro = document.getElementById("buscaYoutube").value.toLowerCase();
+  const container = document.getElementById("youtubeContainer");
+  container.innerHTML = "<p>Carregando...</p>";
+  try {
+    const CORS_PROXY = "https://api.allorigins.win/get?url=";
+    const RSS_URL = encodeURIComponent("https://www.youtube.com/feeds/videos.xml?channel_id=UCpR4FjXJPaEOG8-gqteilTg");
+    const response = await fetch(`${CORS_PROXY}${RSS_URL}`);
+    const data = await response.json();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(data.contents, "text/xml");
+    const items = Array.from(xml.querySelectorAll("entry"));
+    let videos = items.map(item => ({
+      title: item.querySelector("title").textContent,
+      link: item.querySelector("link").getAttribute("href"),
+      thumb: item.querySelector("media\\:thumbnail, thumbnail").getAttribute("url")
+    }));
+    if(filtro){
+      videos = videos.filter(v => v.title.toLowerCase().includes(filtro));
+    }
+    container.innerHTML = "";
+    if(videos.length === 0){container.innerHTML = "<p>Nenhum vídeo encontrado.</p>"; return;}
+    videos.forEach(video => {
+      const div = document.createElement("div");
+      div.className = "arquivo-card";
+      div.innerHTML = `
+        <a href="${video.link}" target="_blank" style="text-decoration:none;color:inherit;">
+          <img src="${video.thumb}">
+          <div class="nome-arquivo">${video.title}</div>
+        </a>
+      `;
+      container.appendChild(div);
+    });
+  } catch(err){
+    container.innerHTML = "<p>Erro ao carregar vídeos.</p>";
+    console.error(err);
+  }
+}
+window.addEventListener("load", buscarVideosRSS);
+
+/* === Inicialização módulos 4 e 5 === */
+window.onload = function(){carregarNotas(); carregarArquivos();}
+</script>
+</body>
+</html>
